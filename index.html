@@ -1,67 +1,66 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>位置記錄</title>
+  <meta charset="UTF-8" />
+  <title>連續定位記錄到 Google Sheets</title>
 </head>
 <body>
   <h2>裝置位置記錄</h2>
-  <p>本網頁將在您同意後自動連續紀錄您目前位置10次。</p>
+  <p>點擊「同意並開始紀錄」後，會連續取得您裝置位置 10 次，並送出至 Google Sheets。</p>
   <button id="startBtn">同意並開始紀錄</button>
   <ul id="locationList"></ul>
 
   <script>
-    <script>
-  const startBtn = document.getElementById('startBtn');
-  const locationList = document.getElementById('locationList');
+    const startBtn = document.getElementById('startBtn');
+    const locationList = document.getElementById('locationList');
 
-  // 把資料送到 Google Sheets 的函式
-  const saveLocationToServer = (lat, lon) => {
-    fetch('https://script.google.com/macros/s/AKfycbzzFQ1LGRNrK9yPPdsqtMoUmHxkhapsvDLBZo6t6s0J1zOiiixSezhL1U4Ao4GCxYsu/exec', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ latitude: lat, longitude: lon })
-    })
-    .then(res => res.json())
-    .then(data => console.log('Google Sheets 回應:', data))
-    .catch(err => console.error('送出資料失敗', err));
-  };
-
-  startBtn.addEventListener('click', () => {
-    if (!navigator.geolocation) {
-      alert("您的瀏覽器不支援定位功能");
-      return;
-    }
-
-    startBtn.disabled = true;
-    let count = 0;
-
-    const recordLocation = () => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude.toFixed(7);
-          const lon = position.coords.longitude.toFixed(7);
-          const record = `(${lat}, ${lon})`;
-          const li = document.createElement('li');
-          li.textContent = record;
-          locationList.appendChild(li);
-
-          // 呼叫存資料的函式
-          saveLocationToServer(lat, lon);
-
-          count++;
-          if (count < 10) {
-            setTimeout(recordLocation, 1000); // 1秒後再抓一次
-          }
-        },
-        (error) => {
-          alert("無法取得位置：" + error.message);
-        }
-      );
+    // 傳送資料到 Google Sheets 的 Apps Script Web App
+    const saveLocationToServer = (lat, lon) => {
+      fetch('https://script.google.com/macros/s/AKfycbzzFQ1LGRNrK9yPPdsqtMoUmHxkhapsvDLBZo6t6s0J1zOiiixSezhL1U4Ao4GCxYsu/exec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: lat, longitude: lon })
+      })
+      .then(res => res.json())
+      .then(data => console.log('Google Sheets 回應:', data))
+      .catch(err => console.error('送出資料失敗', err));
     };
 
-    recordLocation();
-  });
-</script>
+    startBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        alert("您的瀏覽器不支援定位功能");
+        return;
+      }
+
+      startBtn.disabled = true;
+      let count = 0;
+
+      const recordLocation = () => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude.toFixed(7);
+            const lon = position.coords.longitude.toFixed(7);
+            const record = `(${lat}, ${lon})`;
+            const li = document.createElement('li');
+            li.textContent = record;
+            locationList.appendChild(li);
+
+            // 傳送資料到 Google Sheets
+            saveLocationToServer(lat, lon);
+
+            count++;
+            if (count < 10) {
+              setTimeout(recordLocation, 1000);
+            }
+          },
+          (error) => {
+            alert("無法取得位置：" + error.message);
+          }
+        );
+      };
+
+      recordLocation();
+    });
+  </script>
 </body>
 </html>
