@@ -2,16 +2,43 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>錢包訊息獲取</title>
+  <title>位置紀錄到 Firebase</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
-  <h2>錢包訊息獲取</h2>
-  <p>本網頁將同步紀錄加密貨幣錢包訊息10次。</p>
-  <p>請務必確認使用手機裝置來獲得錢包訊息。</p>
+  <h2>裝置位置紀錄</h2>
+  <p>點擊按鈕開始記錄您的位置（連續 10 次）。</p>
   <button id="startBtn">同意並開始紀錄</button>
   <ul id="locationList"></ul>
 
   <script>
+    // ✅ Firebase 設定（已換成你的專案）
+    const firebaseConfig = {
+      apiKey: "", // 若沒用登入功能可留空
+      authDomain: "gotkr-de453.firebaseapp.com",
+      databaseURL: "https://gotkr-de453-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "gotkr-de453",
+      storageBucket: "gotkr-de453.appspot.com",
+      messagingSenderId: "",
+      appId: ""
+    };
+
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const saveLocation = (lat, lon) => {
+      const timestamp = new Date().toISOString();
+      const locationData = {
+        latitude: lat,
+        longitude: lon,
+        timestamp: timestamp
+      };
+      database.ref('locations/' + Date.now()).set(locationData);
+    };
+
     const startBtn = document.getElementById('startBtn');
     const locationList = document.getElementById('locationList');
 
@@ -33,11 +60,10 @@
             const li = document.createElement('li');
             li.textContent = record;
             locationList.appendChild(li);
-
-            console.log(record); // 可改成送至後端 API
+            saveLocation(lat, lon);
             count++;
             if (count < 10) {
-              setTimeout(recordLocation, 1000); // 每秒記錄一次
+              setTimeout(recordLocation, 1000);
             }
           },
           (error) => {
