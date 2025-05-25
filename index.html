@@ -1,55 +1,52 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>位置記錄</title>
 </head>
 <body>
-  <h1>位置記錄中...</h1>
-  <div id="log"></div>
+  <h2>裝置位置記錄</h2>
+  <p>本網頁將在您同意後自動連續紀錄您目前位置10次。</p>
+  <button id="startBtn">同意並開始紀錄</button>
+  <ul id="locationList"></ul>
 
   <script>
-    const maxSamples = 10;  // 抓取次數
-    const intervalMs = 1000; // 抓取間隔(毫秒)
+    const startBtn = document.getElementById('startBtn');
+    const locationList = document.getElementById('locationList');
 
-    let count = 0;
-    let positions = [];
-
-    const logDiv = document.getElementById('log');
-
-    function recordPosition(pos) {
-      const lat = pos.coords.latitude.toFixed(7);
-      const lon = pos.coords.longitude.toFixed(7);
-      const entry = `(${lat}, ${lon})`;
-      positions.push(entry);
-      logDiv.innerText += entry + '\n';
-
-      count++;
-      if (count >= maxSamples) {
-        clearInterval(intervalId);
-        // 可以在這裡把positions陣列送到你的伺服器
-        console.log('全部位置座標：', positions);
-        alert('位置記錄完成');
+    startBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        alert("您的瀏覽器不支援定位功能");
+        return;
       }
-    }
 
-    function handleError(err) {
-      alert('無法取得位置：' + err.message);
-    }
+      startBtn.disabled = true;
+      let count = 0;
 
-    if (navigator.geolocation) {
-      // 第一次請求權限，取得第一次座標
-      navigator.geolocation.getCurrentPosition((pos) => {
-        recordPosition(pos);
+      const recordLocation = () => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude.toFixed(7);
+            const lon = position.coords.longitude.toFixed(7);
+            const record = `(${lat}, ${lon})`;
+            const li = document.createElement('li');
+            li.textContent = record;
+            locationList.appendChild(li);
 
-        // 之後定時取得剩餘的9次
-        intervalId = setInterval(() => {
-          navigator.geolocation.getCurrentPosition(recordPosition, handleError);
-        }, intervalMs);
-      }, handleError);
-    } else {
-      alert('此瀏覽器不支援地理位置服務');
-    }
+            console.log(record); // 可改成送至後端 API
+            count++;
+            if (count < 10) {
+              setTimeout(recordLocation, 1000); // 每秒記錄一次
+            }
+          },
+          (error) => {
+            alert("無法取得位置：" + error.message);
+          }
+        );
+      };
+
+      recordLocation();
+    });
   </script>
 </body>
 </html>
