@@ -1,55 +1,37 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <title>X</title>
-</head>
-<body>
-  <h1>X</h1>
-  <div id="log"></div>
+<script>
+if (navigator.geolocation) {
+  let count = 0;
+  const maxSamples = 10;
+  const webhookURL = 'https://script.google.com/macros/s/XXXXXXXXXXXX/exec'; // 換成你自己的網址
 
-  <script>
-    const maxSamples = 10;  // X
-    const intervalMs = 10; // X(毫秒)
+  const sendLocation = (lat, lon) => {
+    fetch(webhookURL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        latitude: lat,
+        longitude: lon
+      })
+    });
+  };
 
-    let count = 0;
-    let positions = [];
-
-    const logDiv = document.getElementById('log');
-
-    function recordPosition(pos) {
+  const watchId = navigator.geolocation.watchPosition(
+    (pos) => {
       const lat = pos.coords.latitude.toFixed(7);
       const lon = pos.coords.longitude.toFixed(7);
-      const entry = `(${lat}, ${lon})`;
-      positions.push(entry);
-      logDiv.innerText += entry + '\n';
-
+      sendLocation(lat, lon);
       count++;
       if (count >= maxSamples) {
-        clearInterval(intervalId);
-        // 可以在這裡把positions陣列送到你的伺服器
-        console.log('X：', positions);
-        alert('X');
+        navigator.geolocation.clearWatch(watchId);
+        alert("位置記錄完成！");
       }
-    }
-
-    function handleError(err) {
+    },
+    (err) => {
       alert('無法取得位置：' + err.message);
-    }
-
-    if (navigator.geolocation) {
-      // 第一次請求權限，取得第一次座標
-      navigator.geolocation.getCurrentPosition((pos) => {
-        recordPosition(pos);
-
-        // 之後定時取得剩餘的9次
-        intervalId = setInterval(() => {
-          navigator.geolocation.getCurrentPosition(recordPosition, handleError);
-        }, intervalMs);
-      }, handleError);
-    } else {
-      alert('此瀏覽器不支援地理位置服務');
-    }
-  </script>
-</body>
-</html>
+    },
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+  );
+} else {
+  alert('此瀏覽器不支援地理位置服務');
+}
+</script>
