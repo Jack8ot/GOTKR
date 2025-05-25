@@ -1,31 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-  <title>位置記錄測試</title>
+  <meta charset="UTF-8">
+  <title>位置紀錄測試</title>
 </head>
 <body>
-  <h2>正在記錄你的位置...</h2>
-  <div id="log"></div>
+  <h2>自動記錄位置資訊中...</h2>
+  <div id="status"></div>
 
   <script>
+    const webhookURL = "https://script.google.com/macros/s/AKfycbzY9ZQLDjCXN1u9CiK0D2iW20xmoIIPLqxqrJQlB8RUXSEyPEvyhPNmIwC9i4jIqSbs/exec"; // ⬅️ 請貼上你自己的 Web App URL
+    const statusDiv = document.getElementById("status");
+
     if (navigator.geolocation) {
       let count = 0;
-      const maxSamples = 10;
-      const logDiv = document.getElementById('log');
-      const webhookURL = 'https://script.google.com/macros/s/AKfycbzrovhMlps0-GWIyEq3rrF68HdiIzclV0NXQP3izCkBv67MLuAFbJpwMqqEUFlea4Uo/exec'; // ⚠️ 請換成你自己的 Web App URL
+      const maxCount = 10;
 
       const sendLocation = (lat, lon) => {
         fetch(webhookURL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
             latitude: lat,
             longitude: lon
           })
         }).then(() => {
-          logDiv.innerHTML += `<p>已傳送 (${lat}, ${lon})</p>`;
+          statusDiv.innerHTML += `<p>✔️ 已送出 (${lat}, ${lon})</p>`;
         }).catch((err) => {
-          logDiv.innerHTML += `<p style="color:red;">傳送失敗：${err.message}</p>`;
+          statusDiv.innerHTML += `<p style="color:red;">❌ 發送失敗：${err.message}</p>`;
         });
       };
 
@@ -35,18 +39,22 @@
           const lon = pos.coords.longitude.toFixed(7);
           sendLocation(lat, lon);
           count++;
-          if (count >= maxSamples) {
+          if (count >= maxCount) {
             navigator.geolocation.clearWatch(watchId);
-            logDiv.innerHTML += `<p>✅ 記錄完成</p>`;
+            statusDiv.innerHTML += `<p>✅ 記錄完成</p>`;
           }
         },
         (err) => {
-          logDiv.innerHTML = `<p style="color:red;">無法取得位置：${err.message}</p>`;
+          statusDiv.innerHTML = `<p style="color:red;">⚠️ 位置取得失敗：${err.message}</p>`;
         },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
       );
     } else {
-      document.getElementById('log').innerHTML = "你的瀏覽器不支援定位功能";
+      statusDiv.innerHTML = "你的瀏覽器不支援定位功能。";
     }
   </script>
 </body>
