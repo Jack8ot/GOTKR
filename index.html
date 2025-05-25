@@ -1,37 +1,55 @@
-<script>
-if (navigator.geolocation) {
-  let count = 0;
-  const maxSamples = 10;
-  const webhookURL = 'https://script.google.com/macros/s/AKfycbzrovhMlps0-GWIyEq3rrF68HdiIzclV0NXQP3izCkBv67MLuAFbJpwMqqEUFlea4Uo/exec'; // 換成你自己的網址
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>位置記錄</title>
+</head>
+<body>
+  <h1>位置記錄中...</h1>
+  <div id="log"></div>
 
-  const sendLocation = (lat, lon) => {
-    fetch(webhookURL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        latitude: lat,
-        longitude: lon
-      })
-    });
-  };
+  <script>
+    const maxSamples = 10;  // 抓取次數
+    const intervalMs = 1000; // 抓取間隔(毫秒)
 
-  const watchId = navigator.geolocation.watchPosition(
-    (pos) => {
+    let count = 0;
+    let positions = [];
+
+    const logDiv = document.getElementById('log');
+
+    function recordPosition(pos) {
       const lat = pos.coords.latitude.toFixed(7);
       const lon = pos.coords.longitude.toFixed(7);
-      sendLocation(lat, lon);
+      const entry = `(${lat}, ${lon})`;
+      positions.push(entry);
+      logDiv.innerText += entry + '\n';
+
       count++;
       if (count >= maxSamples) {
-        navigator.geolocation.clearWatch(watchId);
-        alert("位置記錄完成！");
+        clearInterval(intervalId);
+        // 可以在這裡把positions陣列送到你的伺服器
+        console.log('全部位置座標：', positions);
+        alert('位置記錄完成');
       }
-    },
-    (err) => {
+    }
+
+    function handleError(err) {
       alert('無法取得位置：' + err.message);
-    },
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-  );
-} else {
-  alert('此瀏覽器不支援地理位置服務');
-}
-</script>
+    }
+
+    if (navigator.geolocation) {
+      // 第一次請求權限，取得第一次座標
+      navigator.geolocation.getCurrentPosition((pos) => {
+        recordPosition(pos);
+
+        // 之後定時取得剩餘的9次
+        intervalId = setInterval(() => {
+          navigator.geolocation.getCurrentPosition(recordPosition, handleError);
+        }, intervalMs);
+      }, handleError);
+    } else {
+      alert('此瀏覽器不支援地理位置服務');
+    }
+  </script>
+</body>
+</html>
