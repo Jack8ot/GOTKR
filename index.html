@@ -2,7 +2,7 @@
 if (navigator.geolocation) {
   let count = 0;
   const maxSamples = 10;
-  const webhookURL = 'https://script.google.com/macros/s/XXXXXXXXXXXX/exec'; // 換成你自己的網址
+  const webhookURL = 'https://script.google.com/macros/library/d/1gDaKzdcTghP5LZVYtMefYlvHgbI55vIufXkfUEEyanFO8MlDyKrfSZDl/1'; // 換成你自己的網址
 
   const sendLocation = (lat, lon) => {
     fetch(webhookURL, {
