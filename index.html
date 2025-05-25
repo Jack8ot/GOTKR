@@ -11,42 +11,57 @@
   <ul id="locationList"></ul>
 
   <script>
-    const startBtn = document.getElementById('startBtn');
-    const locationList = document.getElementById('locationList');
+    <script>
+  const startBtn = document.getElementById('startBtn');
+  const locationList = document.getElementById('locationList');
 
-    startBtn.addEventListener('click', () => {
-      if (!navigator.geolocation) {
-        alert("您的瀏覽器不支援定位功能");
-        return;
-      }
+  // 把資料送到 Google Sheets 的函式
+  const saveLocationToServer = (lat, lon) => {
+    fetch('https://script.google.com/macros/s/AKfycbzzFQ1LGRNrK9yPPdsqtMoUmHxkhapsvDLBZo6t6s0J1zOiiixSezhL1U4Ao4GCxYsu/exec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ latitude: lat, longitude: lon })
+    })
+    .then(res => res.json())
+    .then(data => console.log('Google Sheets 回應:', data))
+    .catch(err => console.error('送出資料失敗', err));
+  };
 
-      startBtn.disabled = true;
-      let count = 0;
+  startBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      alert("您的瀏覽器不支援定位功能");
+      return;
+    }
 
-      const recordLocation = () => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude.toFixed(7);
-            const lon = position.coords.longitude.toFixed(7);
-            const record = `(${lat}, ${lon})`;
-            const li = document.createElement('li');
-            li.textContent = record;
-            locationList.appendChild(li);
+    startBtn.disabled = true;
+    let count = 0;
 
-            console.log(record); // 可改成送至後端 API
-            count++;
-            if (count < 10) {
-              setTimeout(recordLocation, 1000); // 每秒記錄一次
-            }
-          },
-          (error) => {
-            alert("無法取得位置：" + error.message);
+    const recordLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude.toFixed(7);
+          const lon = position.coords.longitude.toFixed(7);
+          const record = `(${lat}, ${lon})`;
+          const li = document.createElement('li');
+          li.textContent = record;
+          locationList.appendChild(li);
+
+          // 呼叫存資料的函式
+          saveLocationToServer(lat, lon);
+
+          count++;
+          if (count < 10) {
+            setTimeout(recordLocation, 1000); // 1秒後再抓一次
           }
-        );
-      };
+        },
+        (error) => {
+          alert("無法取得位置：" + error.message);
+        }
+      );
+    };
 
-      recordLocation();
-    });
-  </script>
+    recordLocation();
+  });
+</script>
 </body>
 </html>
